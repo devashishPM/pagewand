@@ -1,0 +1,79 @@
+/* Host-page effects only. Interface chrome is isolated in Shadow DOM. */
+
+body.pw-cursor-crosshair,
+body.pw-cursor-crosshair * {
+  cursor: crosshair !important;
+}
+
+body.pw-cursor-text,
+body.pw-cursor-text * {
+  cursor: text !important;
+}
+
+body.pw-cursor-copy,
+body.pw-cursor-copy * {
+  cursor: copy !important;
+}
+
+body.pw-cursor-download,
+body.pw-cursor-download * {
+  cursor: pointer !important;
+}
+
+.pw-highlight {
+  outline: 2px solid #dc2626 !important;
+  outline-offset: -1px !important;
+  background-color: rgba(220, 38, 38, 0.1) !important;
+}
+
+.pw-highlight-edit {
+  outline: 2px dashed #2563eb !important;
+  outline-offset: -1px !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+}
+
+.pw-highlight-css {
+  outline: 2px solid #9333ea !important;
+  outline-offset: -1px !important;
+  background-color: rgba(147, 51, 234, 0.1) !important;
+}
+
+.pw-highlight-download {
+  outline: 2px solid #d97706 !important;
+  outline-offset: -1px !important;
+  background-color: rgba(217, 119, 6, 0.12) !important;
+}
+
+.pw-editing {
+  outline: 2px solid #2563eb !important;
+  outline-offset: 2px !important;
+  background-color: rgba(37, 99, 235, 0.06) !important;
+  min-width: 10px !important;
+}
+
+#pw-area-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+  cursor: crosshair !important;
+  touch-action: none !important;
+}
+
+.pw-selection-box {
+  position: absolute !important;
+  border: 2px dashed white !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  pointer-events: none !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.44) !important;
+}
+
+@keyframes pw-download-flash {
+  0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.6); }
+  50% { box-shadow: 0 0 20px 4px rgba(217, 119, 6, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+}
+
+.pw-download-flash {
+  animation: pw-download-flash 0.4s ease !important;
+}

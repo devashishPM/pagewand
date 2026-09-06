@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/devashishPM/pagewand/security/advisories/new
+    about: Report vulnerabilities privately. Enable private vulnerability reporting before public launch.

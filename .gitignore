@@ -1,0 +1,26 @@
+# Local documentation (not for public repo)
+SPECS.local.md
+PLAN.local.md
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Extension packaging
+*.crx
+*.pem
+dist/
+node_modules/
+test-results/
+playwright-report/
+
+# Local documentation
+*.local.md
+
+# IDE specific
+.cursor/

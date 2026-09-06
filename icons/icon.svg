@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="PageWand icon">
+  <defs>
+    <linearGradient id="background" x1="16" y1="112" x2="112" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#background)"/>
+  <path d="M34 96L82 48" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M88 24L93 37L106 42L93 47L88 60L83 47L70 42L83 37Z" fill="#FDE68A"/>
+  <circle cx="48" cy="31" r="5" fill="#FFFFFF" fill-opacity="0.9"/>
+  <circle cx="102" cy="70" r="4" fill="#FFFFFF" fill-opacity="0.8"/>
+</svg>

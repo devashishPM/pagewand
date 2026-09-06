@@ -1,0 +1,31 @@
+{
+  "name": "pagewand",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development checks and release packaging for the PageWand Chrome extension.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devashishPM/pagewand.git"
+  },
+  "homepage": "https://github.com/devashishPM/pagewand#readme",
+  "bugs": {
+    "url": "https://github.com/devashishPM/pagewand/issues"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.cjs",
+    "test:extension": "node --test tests/extension.smoke.cjs",
+    "test:syntax": "node scripts/check-syntax.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "docs:screenshots": "node scripts/capture-docs.mjs",
+    "public:snapshot": "node scripts/build-public-repo.mjs",
+    "package": "node scripts/build-release.mjs",
+    "test:package": "node scripts/verify-release.mjs",
+    "check": "npm run test:syntax && npm test && npm run package && npm run test:package"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
