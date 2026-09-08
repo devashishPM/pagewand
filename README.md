@@ -4,6 +4,8 @@
 
 PageWand (PW) is a lightweight Chrome extension for temporarily cleaning up and inspecting a webpage. Remove distracting elements, edit text-only content, copy a computed CSS snapshot, capture and annotate what you see, or download the displayed original asset.
 
+**Available now on the [Chrome Web Store](https://chromewebstore.google.com/detail/pagewand/iblpdcnjcidcojjfiikclboaaenikloc).**
+
 ![PageWand mode selector](docs/onboarding.png)
 
 PageWand has no runtime dependencies, backend, accounts, analytics, or telemetry. It runs on demand in the active tab.
@@ -22,7 +24,13 @@ The compact toolbar shows only the current tool and actions that apply to it. Ch
 
 ![PageWand persistent toolbar](docs/toolbar.png)
 
-## Install from source
+## Install
+
+### Chrome Web Store
+
+[**Add PageWand to Chrome →**](https://chromewebstore.google.com/detail/pagewand/iblpdcnjcidcojjfiikclboaaenikloc)
+
+### Install from source
 
 1. Download or clone this repository.
 2. Open `chrome://extensions` in Chrome.
