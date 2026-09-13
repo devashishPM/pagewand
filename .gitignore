@@ -1,26 +1,31 @@
-# Local documentation (not for public repo)
-SPECS.local.md
-PLAN.local.md
+# Local plans and publisher material
+*.local.md
+/store-assets/
 
-# macOS
-.DS_Store
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Extension packaging
+# Dependencies and generated release packages
+node_modules/
+dist/
 *.crx
 *.pem
-dist/
-node_modules/
+
+# Test output and coverage
 test-results/
 playwright-report/
+coverage/
+.nyc_output/
 
-# Local documentation
-*.local.md
+# Local configuration, logs, and scratch files
+.env
+.env.*
+!.env.example
+*.log
+/tmp/
+/temp/
 
-# IDE specific
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
 .cursor/
+*.swp
+*.swo

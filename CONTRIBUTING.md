@@ -25,7 +25,7 @@ Runtime code intentionally has no production dependencies. Development dependenc
 - Run `npm run check` before submitting.
 - Test the unpacked extension in a fresh Chrome profile when changing permissions, injection, downloads, capture, clipboard, or service-worker behavior.
 - Update `README.md`, `PRIVACY.md`, and `CHANGELOG.md` when behavior or permissions change.
-- Do not commit `.local.md` planning documents, credentials, `.pem` files, generated `dist/` contents, or editor-specific settings.
+- Do not commit `.local.md` planning documents, credentials, `.pem` files, generated `dist/` contents, `store-assets/` artwork, environment files, logs, test output, or editor-specific settings. Keep publisher drafts in `*.local.md` files; commit only intentional documentation images used by the public docs.
 
 ## Code conventions
 

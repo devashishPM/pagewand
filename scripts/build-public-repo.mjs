@@ -76,7 +76,7 @@ for (const relative of publicFiles) {
 }
 
 const manifest = JSON.parse(await readFile(path.join(destinationRoot, 'manifest.json'), 'utf8'));
-if (manifest.name !== 'PageWand' || manifest.version !== '1.1.1') {
+if (manifest.name !== 'PageWand — Screenshot & Page Editor' || manifest.version !== '1.1.1') {
   throw new Error('Public snapshot expected PageWand version 1.1.1.');
 }
 

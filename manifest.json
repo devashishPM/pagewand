@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PageWand",
+  "name": "PageWand — Screenshot & Page Editor",
   "version": "1.1.1",
-  "description": "A lightweight browser toolkit for shaping any webpage",
+  "description": "Capture full-page screenshots, remove unwanted elements, edit webpage text, and annotate or redact screenshots.",
   "permissions": [
     "activeTab",
     "scripting",
