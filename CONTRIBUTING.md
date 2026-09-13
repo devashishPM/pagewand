@@ -34,3 +34,15 @@ Runtime code intentionally has no production dependencies. Development dependenc
 - Every asynchronous capture must remain tied to its request and live session.
 - Preserve original asset bytes unless a conversion is explicit in the UI.
 - Teardown must be safe to call from every state and more than once.
+
+## Publishing a version
+
+A Git push alone does not update GitHub Releases. For an authorized version release:
+
+1. Confirm the manifest, package metadata, and changelog agree on the release version.
+2. Run `npm run check` and `npm run test:extension` against the final revision.
+3. Push the reviewed source and confirm the remote commit.
+4. Create the matching `v<version>` GitHub release targeting that exact commit, with user-facing release notes and the verified `dist/pagewand-<version>.zip` attached.
+5. Verify the published release, tag target, and downloadable ZIP; report the release link.
+
+Chrome Web Store submission is a separate publication step. State its status separately; a GitHub release does not update the Store. Keep publisher artwork and drafts local.
