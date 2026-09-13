@@ -42,6 +42,7 @@ const publicFiles = [
   'styles.css',
   'tests/background.test.cjs',
   'tests/extension.smoke.cjs',
+  'tests/full-page.smoke.cjs',
   'tests/session.test.cjs',
   'ui.js'
 ];
@@ -75,8 +76,8 @@ for (const relative of publicFiles) {
 }
 
 const manifest = JSON.parse(await readFile(path.join(destinationRoot, 'manifest.json'), 'utf8'));
-if (manifest.name !== 'PageWand' || manifest.version !== '1.0.0') {
-  throw new Error('Public snapshot expected PageWand version 1.0.0.');
+if (manifest.name !== 'PageWand' || manifest.version !== '1.1.1') {
+  throw new Error('Public snapshot expected PageWand version 1.1.1.');
 }
 
 console.log(`Prepared dist/pagewand-public with ${publicFiles.length} allowlisted files.`);

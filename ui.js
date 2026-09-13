@@ -8,7 +8,7 @@
     ['zap', '⚡', 'Zap', 'Z', 'Remove an element'],
     ['edit', '✎', 'Edit', 'E', 'Edit text-only elements'],
     ['css', '{}', 'CSS', 'C', 'Copy a computed-style snapshot'],
-    ['screenshot', '▣', 'Capture', 'S', 'Capture what you see or select an area'],
+    ['screenshot', '▣', 'Capture', 'S', 'Capture visible page, selected area, or full page'],
     ['download', '↓', 'Download', 'D', 'Download the displayed original asset']
   ];
 
@@ -109,6 +109,7 @@
           <span class="divider" data-role="context-divider" aria-hidden="true"></span>
           <button type="button" data-action="visible-page" data-context="screenshot" aria-label="Capture the visible part of the page" title="Capture the visible part of the page (1)" hidden><span class="action-icon" aria-hidden="true">▣</span> <span class="label">Visible page</span><kbd>1</kbd></button>
           <button type="button" data-action="area" data-context="screenshot" aria-label="Capture a selected area" title="Capture a selected area (2)" hidden><span class="action-icon" aria-hidden="true">⌗</span> <span class="label">Selected area</span><kbd>2</kbd></button>
+          <button type="button" data-action="full-page" data-context="screenshot" hidden>Full page <kbd>3</kbd></button>
           <button type="button" data-action="parent" data-context="zap edit css" aria-label="Select the parent of the highlighted element" title="Hover an element first" disabled><span class="action-icon" aria-hidden="true">↑</span> <span class="label">Parent</span></button>
           <button type="button" data-action="undo" data-context="history" aria-label="Nothing to undo" title="Nothing to undo" hidden disabled><span class="action-icon" aria-hidden="true">↶</span> <span class="label">Undo</span></button>
           <span class="context-hint" data-context="download" hidden>Choose an asset on the page</span>
@@ -132,6 +133,7 @@
         <aside class="preview" style="--mode-color:${COLORS.css}" aria-hidden="true"><strong></strong><pre></pre></aside>
         <aside class="asset" style="--mode-color:${COLORS.download}" aria-hidden="true"><strong></strong><span></span></aside>
         <div class="edit-controls"><button class="save" type="button">Save</button><button class="cancel" type="button">Cancel</button></div>
+        <div class="capture-progress" hidden style="position:fixed;top:12px;left:50%;transform:translateX(-50%);pointer-events:auto;background:white;color:#18181b;padding:12px;border-radius:10px;box-shadow:0 4px 24px #0004;font:14px system-ui;max-width:90vw"><span role="status" aria-live="polite"></span> <button type="button" data-action="cancel-capture">Cancel</button></div>
         <div class="live" role="status" aria-live="polite"></div>`;
       document.documentElement.appendChild(this.host);
 
@@ -165,6 +167,8 @@
         if (action === 'undo') this.handlers.onUndo();
         if (action === 'parent') this.handlers.onParent();
         if (action === 'visible-page') this.handlers.onVisiblePage();
+        if (action === 'full-page') this.handlers.onFullPage();
+        if (action === 'cancel-capture') this.cancelCapture?.();
         if (action === 'area') this.handlers.onArea();
         if (action === 'exit') this.handlers.onExit();
         if (action === 'choose-mode') {
@@ -173,6 +177,16 @@
         }
         if (action === 'close-picker') this.closeModePicker(true);
       });
+    }
+
+    setCaptureProgress(message, cancel) {
+      const progress = this.root.querySelector('.capture-progress');
+      const wasHidden = progress.hidden;
+      progress.hidden = !message;
+      this.toolbar.hidden = Boolean(message);
+      this.cancelCapture = cancel;
+      if (message) progress.querySelector('span').textContent = message;
+      if (message && wasHidden) progress.querySelector('button').focus({ preventScroll: true });
     }
 
     focusStart() {

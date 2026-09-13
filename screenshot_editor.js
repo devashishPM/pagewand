@@ -25,7 +25,9 @@
   class ScreenshotEditor {
     constructor(dataUrl, cropRect = null) {
       ScreenshotEditor.closeActive();
-      this.dataUrl = dataUrl;
+      this.dataUrl = typeof dataUrl === 'string' ? dataUrl : null;
+      this.source = typeof dataUrl === 'object' ? dataUrl : null;
+      this.historyBytes = 0;
       this.cropRect = cropRect;
       this.activeTool = 'rect';
       this.color = '#dc2626';
@@ -103,8 +105,26 @@
     }
 
     loadImage() {
+      if (this.source) {
+        const { canvas, scale, notice } = this.source;
+        this.canvas.replaceWith(canvas);
+        this.canvas = canvas;
+        this.canvas.setAttribute('aria-label', 'Screenshot annotation canvas');
+        this.ctx = canvas.getContext('2d', { willReadFrequently: true });
+        canvas.style.width = `${Math.min(canvas.width / scale, innerWidth * .94)}px`;
+        canvas.style.height = 'auto';
+        canvas.style.maxWidth = '94vw';
+        canvas.addEventListener('pointerdown', event => this.onPointerDown(event));
+        canvas.addEventListener('pointermove', event => this.onPointerMove(event));
+        canvas.addEventListener('pointerup', event => this.onPointerUp(event));
+        canvas.addEventListener('pointercancel', () => this.cancelStroke());
+        this.setStatus(notice || 'Full-page screenshot ready. Scroll to annotate. Escape closes the editor.');
+        this.source = null;
+        return;
+      }
       const image = new Image();
       image.onload = () => {
+        if (!this.host) return;
         const ratio = window.devicePixelRatio || 1;
         let sourceX = 0;
         let sourceY = 0;
@@ -129,17 +149,40 @@
     }
 
     saveState() {
-      this.history.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
-      if (this.history.length > 20) this.history.shift();
+      // Initial image needs no undo entry; each annotation records only its old pixels.
+    }
+
+    savePatch(x, y, width, height, snapshot = null) {
+      const left = Math.max(0, Math.floor(x)), top = Math.max(0, Math.floor(y));
+      const right = Math.min(this.canvas.width, Math.ceil(x + width));
+      const bottom = Math.min(this.canvas.height, Math.ceil(y + height));
+      const w = right - left, h = bottom - top;
+      if (w <= 0 || h <= 0) return true;
+      const bytes = w * h * 4;
+      if (bytes > 64 * 1024 * 1024) {
+        this.setStatus('That annotation is too large to undo safely. Try a smaller area.', true);
+        return false;
+      }
+      const data = this.ctx.createImageData(w, h);
+      if (snapshot) {
+        for (let row = 0; row < h; row++) {
+          const offset = ((top + row) * this.canvas.width + left) * 4;
+          data.data.set(snapshot.data.subarray(offset, offset + w * 4), row * w * 4);
+        }
+      } else data.data.set(this.ctx.getImageData(left, top, w, h).data);
+      while (this.history.length && (this.historyBytes + bytes > 64 * 1024 * 1024 || this.history.length >= 20)) {
+        this.historyBytes -= this.history.shift().data.data.byteLength;
+      }
+      this.history.push({ x: left, y: top, data });
+      this.historyBytes += bytes;
+      return true;
     }
 
     undo() {
-      if (this.history.length <= 1) {
-        this.setStatus('Nothing to undo.');
-        return;
-      }
-      this.history.pop();
-      this.ctx.putImageData(this.history[this.history.length - 1], 0, 0);
+      const patch = this.history.pop();
+      if (!patch) { this.setStatus('Nothing to undo.'); return; }
+      this.ctx.putImageData(patch.data, patch.x, patch.y);
+      this.historyBytes -= patch.data.data.byteLength;
       this.setStatus('Undid the last annotation.');
     }
 
@@ -156,6 +199,7 @@
         this.openTextInput(event);
         return;
       }
+      if (this.isDrawing) this.cancelStroke();
       this.isDrawing = true;
       this.start = this.point(event);
       this.snapshot = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -177,16 +221,22 @@
       this.isDrawing = false;
       const point = this.point(event);
       this.ctx.putImageData(this.snapshot, 0, 0);
+      const region = this.region(point);
+      if (!this.savePatch(region.x - 24, region.y - 24, region.width + 48, region.height + 48, this.snapshot)) {
+        this.snapshot = null;
+        return;
+      }
       if (this.activeTool === 'rect') this.drawRect(point);
       if (this.activeTool === 'arrow') this.drawArrow(point);
       if (this.activeTool === 'pixelate') this.applyPixelate(point);
       if (this.activeTool === 'redact') this.drawCover(point, '#111827');
-      this.saveState();
+      this.snapshot = null;
     }
 
     cancelStroke() {
       if (this.isDrawing && this.snapshot) this.ctx.putImageData(this.snapshot, 0, 0);
       this.isDrawing = false;
+      this.snapshot = null;
     }
 
     drawRect(point) {
@@ -260,10 +310,12 @@
         input.remove();
         this.textInput = null;
         if (!commit || !text) return;
-        const ratio = this.canvas.width / parseFloat(this.canvas.style.width || this.canvas.width);
+        const ratio = this.canvas.width / this.canvas.getBoundingClientRect().width;
         this.ctx.font = `700 ${20 * ratio}px sans-serif`;
         this.ctx.textBaseline = 'top';
         this.ctx.fillStyle = this.color;
+        const metrics = this.ctx.measureText(text);
+        if (!this.savePatch(point.x, point.y, metrics.width + 12, 32 * ratio + 12)) return;
         this.ctx.fillText(text, point.x + 4, point.y + 4);
         this.saveState();
       };
@@ -326,6 +378,10 @@
       if (!this.host) return;
       window.removeEventListener('keydown', this.onKeydown, true);
       if (this.textInput) this.textInput.remove();
+      this.snapshot = null;
+      this.history = []; this.historyBytes = 0;
+      this.dataUrl = null; this.source = null;
+      this.canvas.width = 0; this.canvas.height = 0;
       this.host.remove();
       this.host = null;
       if (ScreenshotEditor.activeInstance === this) ScreenshotEditor.activeInstance = null;

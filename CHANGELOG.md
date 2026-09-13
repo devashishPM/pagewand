@@ -1,5 +1,19 @@
 # Changelog
 
+
+## 1.1.1
+
+- Fix Full page returning a visible-only image on dashboard apps whose main content scrolls inside a panel.
+- Detect the dominant panel, crop and stitch its content, and restore its scroll position; leave smaller widgets unchanged.
+- Add actual-extension panel tests at 1× and 2×, including partial horizontal clipping.
+
+## 1.1.0
+
+- Add full-page vertical capture with progress, cancellation, native-resolution stitching, and existing annotation/PNG export.
+- Restore scroll position and temporary sticky/fixed-element styling after success, cancellation, or failure; stop on unstable geometry or tab/viewport changes.
+- Pace screenshot requests across all tabs and bound capture size/time and annotation undo memory.
+- Keep runtime dependency and permission sets unchanged.
+
 All notable changes to PageWand (PW) will be documented in this file.
 
 ## [1.0.0] - 2026-09-06

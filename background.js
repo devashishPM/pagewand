@@ -4,6 +4,9 @@
 
 const tabQueues = new Map();
 const captureQueues = new Map();
+let nextCaptureAt = Date.now() + 600;
+const tabEpochs = new Map();
+
 const RUNTIME_FILES = [
   'css_export.js',
   'downloads.js',
@@ -120,10 +123,23 @@ function senderStillOwnsActiveTab(sender) {
   });
 }
 
-async function captureSenderTab(sender) {
-  await senderStillOwnsActiveTab(sender);
+async function captureSenderTab(sender, message, epoch) {
+  const validate = async () => {
+    await senderStillOwnsActiveTab(sender);
+    if ((tabEpochs.get(sender.tab.id) || 0) !== epoch) throw new Error('Capture cancelled because the tab changed');
+    if (message.fullPage) {
+      const state = await chrome.tabs.sendMessage(sender.tab.id, { action: 'CHECK_CAPTURE', requestId: message.requestId },
+        sender.documentId ? { documentId: sender.documentId } : { frameId: 0 });
+      if (!state?.valid) throw new Error('Capture session is no longer active');
+    }
+  };
+  await validate();
+  const delay = nextCaptureAt - Date.now();
+  if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
+  await validate();
+  nextCaptureAt = Date.now() + 600;
   const dataUrl = await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: 'png' });
-  await senderStillOwnsActiveTab(sender);
+  await validate();
   return dataUrl;
 }
 
@@ -146,8 +162,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'SHOOT_TAB' && sender.tab) {
-    enqueue(captureQueues, sender.tab.id, () => captureSenderTab(sender))
-      .then((dataUrl) => sendResponse({ dataUrl, requestId: message.requestId }))
+    const epoch = tabEpochs.get(sender.tab.id) || 0;
+    tabEpochs.set(sender.tab.id, epoch);
+    enqueue(captureQueues, 'all', () => captureSenderTab(sender, message, epoch))
+      .then((dataUrl) => sendResponse({ dataUrl, requestId: message.requestId, ...(message.fullPage ? { tileId: message.tileId } : {}) }))
       .catch((error) => sendResponse({ error: error.message, requestId: message.requestId }));
     return true;
   }
@@ -176,9 +194,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabQueues.delete(tabId);
-  captureQueues.delete(tabId);
+  tabEpochs.delete(tabId);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === 'loading') tabEpochs.set(tabId, (tabEpochs.get(tabId) || 0) + 1);
   if (changeInfo.status === 'loading') setInactiveBadge(tabId).catch(() => {});
+});
+
+chrome.tabs.onActivated?.addListener(() => {
+  for (const [id, epoch] of tabEpochs) tabEpochs.set(id, epoch + 1);
 });

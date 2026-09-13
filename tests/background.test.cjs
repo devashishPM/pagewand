@@ -32,7 +32,8 @@ function worker(shared) {
         if (message.action === 'cleanup') { shared.active = false; shared.cleanups += 1; return { active: false }; }
         return undefined;
       },
-      async get() {
+      async get(tabId) {
+        if (shared.multiTab) return { id:tabId,active:true,windowId:tabId===4?2:3,url:'https://example.test/' };
         if (shared.tabStates && shared.tabStates.length) return shared.tabStates.shift();
         return { id: 4, active: true, windowId: 2, url: 'https://example.test/' };
       },
@@ -41,7 +42,7 @@ function worker(shared) {
     runtime: { lastError: null, onMessage: { addListener(listener) { listeners.message = listener; } } },
     downloads: { download(_options, callback) { callback(1); } }
   };
-  vm.runInNewContext(source, { chrome, console, Promise, Map, String, Number, RegExp, Error });
+  vm.runInNewContext(source, { chrome, console, Promise, Map, String, Number, RegExp, Error, Date, setTimeout });
   return listeners;
 }
 
@@ -119,4 +120,25 @@ test('capture is discarded when active tab identity changes', async () => {
   ));
   assert.equal(response.requestId, 99);
   assert.match(response.error, /active tab changed/);
+});
+
+test('capture scheduler spaces requests across tabs and windows', async () => {
+  const shared = { active:false,badges:[],removals:0,multiTab:true };
+  const listeners=worker(shared);
+  const stamps=[];
+  const send = requestId => new Promise(resolve=>listeners.message({action:'SHOOT_TAB',requestId},
+    {tab:{id:requestId===2?5:4,windowId:requestId===2?3:2,url:'https://example.test/'}},response=>{stamps.push(Date.now());resolve(response);}));
+  const results=await Promise.all([send(1),send(2),send(3)]);
+  assert.deepEqual(results.map(r=>r.requestId),[1,2,3]);
+  assert.ok(stamps[1]-stamps[0]>=580);
+  assert.ok(stamps[2]-stamps[1]>=580);
+});
+
+test('full-page requests reject cancelled sessions without returning image data', async () => {
+  const shared={active:false,badges:[],removals:0};
+  const listeners=worker(shared);
+  const result=await new Promise(resolve=>listeners.message({action:'SHOOT_TAB',requestId:4,fullPage:true,tileId:0},
+    {tab:{id:4,windowId:2,url:'https://example.test/'},documentId:'original-doc'},resolve));
+  assert.match(result.error,/no longer active/);
+  assert.equal(result.dataUrl,undefined);
 });

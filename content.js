@@ -87,7 +87,7 @@
   }
 
   function handleMouseOver(event) {
-    if (!active || ui.isStarting() || editor.isActive() || capture.overlay || window.__pwScreenshotEditorActive || isOwnedEvent(event)) return;
+    if (!active || ui.isStarting() || editor.isActive() || capture.inFlight || capture.overlay || window.__pwScreenshotEditorActive || isOwnedEvent(event)) return;
     highlight(event.target, event.clientX, event.clientY);
   }
 
@@ -174,7 +174,7 @@
   }
 
   function handlePageClick(event) {
-    if (!active || ui.isStarting() || ui.isChoosingMode() || editor.isActive() || capture.overlay || window.__pwScreenshotEditorActive || isOwnedEvent(event)) return;
+    if (!active || ui.isStarting() || ui.isChoosingMode() || editor.isActive() || capture.inFlight || capture.overlay || window.__pwScreenshotEditorActive || isOwnedEvent(event)) return;
     if (currentMode === 'screenshot') return;
 
     const target = highlightedElement || event.target;
@@ -213,7 +213,7 @@
       zap: 'Zap: click an element to remove it',
       edit: 'Edit: click a text-only element',
       css: 'CSS: click an element to copy its computed snapshot',
-      screenshot: 'Capture: choose Visible page or Selected area, or press 1 or 2',
+      screenshot: 'Capture: choose Visible page, Selected area, or Full page; press 1, 2, or 3',
       download: 'Download: click an image, SVG, icon, or background image'
     };
     showToast(messages[mode]);
@@ -246,6 +246,10 @@
 
   function handleKeyDown(event) {
     if (!active || window.__pwScreenshotEditorActive || editor.isActive()) return;
+    if (capture.fullSession) {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); capture.cancelFullPage(); }
+      return;
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -282,6 +286,9 @@
     if (currentMode === 'screenshot' && event.key === '1') {
       event.preventDefault();
       capture.captureViewport();
+    } else if (currentMode === 'screenshot' && event.key === '3') {
+      event.preventDefault();
+      capture.captureFullPage();
     } else if (currentMode === 'screenshot' && event.key === '2') {
       event.preventDefault();
       capture.startAreaCapture();
@@ -289,6 +296,10 @@
   }
 
   function messageHandler(message, _sender, sendResponse) {
+    if (message?.action === 'CHECK_CAPTURE') {
+      sendResponse({ valid: Boolean(active && capture.fullSession && !capture.fullSession.error && capture.fullSession.id === message.requestId && !document.hidden) });
+      return false;
+    }
     if (!message || typeof message.action !== 'string') return undefined;
     if (message.action === 'ping') {
       sendResponse({ active });
@@ -335,6 +346,7 @@
     onParent: selectParent,
     onVisiblePage: () => capture.captureViewport(),
     onArea: () => capture.startAreaCapture(),
+    onFullPage: () => capture.captureFullPage(),
     onExit: requestDeactivate
   });
   editor = new modules.EditManager({ ui, onCommit: pushUndo, showToast });

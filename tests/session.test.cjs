@@ -13,7 +13,7 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { if (browser) await browser.close(); });
 
-async function fixture(html, viewport = { width: 900, height: 700 }) {
+async function fixture(html, viewport = { width: 900, height: 700 }, standards = false) {
   const page = await browser.newPage({ viewport });
   await page.addInitScript(() => {
     window.__messages = [];
@@ -39,7 +39,7 @@ async function fixture(html, viewport = { width: 900, height: 700 }) {
       }
     };
   });
-  await page.goto(`data:text/html,${encodeURIComponent(`<style>body{padding-top:80px}</style>${html}`)}`);
+  await page.goto(`data:text/html,${encodeURIComponent(`${standards ? '<!doctype html>' : ''}<style>body{padding-top:80px}</style>${html}`)}`);
   await page.addStyleTag({ path: path.join(root, 'styles.css') });
   for (const file of runtimeFiles) await page.addScriptTag({ path: path.join(root, file) });
   return page;
@@ -295,5 +295,44 @@ test('screenshot editor exposes accessible tools, opaque redaction, and Escape c
   assert.ok(labels.every(Boolean));
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#pw-screenshot-host').count(), 0);
+  await page.close();
+});
+
+test('large-image editor keeps region undo under budget and releases buffers on close', async () => {
+  const page=await fixture('<p>Memory test</p>');
+  const result=await page.evaluate(()=>{
+    const canvas=document.createElement('canvas');canvas.width=2000;canvas.height=10000;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,2000,10000);
+    const editor=new window.ScreenshotEditor({canvas,scale:1});
+    // Small redactions on a 20 MP image retain only changed pixels.
+    for(let i=0;i<25;i++) { editor.savePatch(10,i*20,100,10);ctx.fillStyle='black';ctx.fillRect(10,i*20,100,10); }
+    const bytes=editor.historyBytes, count=editor.history.length;
+    editor.undo();
+    const restored=Array.from(ctx.getImageData(20,480,1,1).data);
+    const oversized=editor.savePatch(0,0,2000,10000);
+    // Stroke cancellation frees the transient full-frame copy.
+    editor.snapshot=ctx.getImageData(0,0,2000,10000);editor.isDrawing=true;editor.cancelStroke();
+    const snapshotReleased=editor.snapshot===null;
+    editor.close();
+    return {bytes,count,restored,oversized,snapshotReleased,after:editor.historyBytes,width:canvas.width};
+  });
+  assert.equal(result.count,20);assert.equal(result.bytes,80000);
+  assert.deepEqual(result.restored,[255,255,255,255]);assert.equal(result.oversized,false);
+  assert.equal(result.snapshotReleased,true);assert.equal(result.after,0);assert.equal(result.width,0);
+  await page.close();
+});
+
+
+test('capture target prefers the document and rejects ambiguous main panels', async () => {
+  const page = await fixture('<style>html,body{height:100%;margin:0;padding:0;overflow:hidden}.panel{position:fixed;top:0;width:46vw;height:90vh;overflow:auto}.panel div{height:2000px}</style><main class="panel" style="left:0"><div>Left</div></main><main class="panel" style="right:0"><div>Right</div></main>', undefined, true);
+  assert.match(await page.evaluate(() => {try{window.__pageWandModules.captureTarget();return '';}catch(e){return e.message;}}), /Multiple scrolling panels/);
+  const result = await page.evaluate(() => {
+    document.querySelectorAll('.panel')[1].remove();
+    const panel = window.__pageWandModules.captureTarget();
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.height = '3000px';
+    return {panel:panel.tagName,document:window.__pageWandModules.captureTarget()===document.scrollingElement};
+  });
+  assert.deepEqual(result,{panel:'MAIN',document:true});
   await page.close();
 });

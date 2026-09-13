@@ -12,6 +12,8 @@ PageWand does not make background analytics or telemetry requests.
 
 When you explicitly use Download, Chrome requests the selected asset URL so it can save the original file. That request goes to the asset's existing host, not to a PageWand service. Merely hovering an asset does not trigger a size or metadata request.
 
+Full-page capture scrolls the main document or a detected main content panel to prepare and photograph it. This can trigger the website’s own lazy-loading, analytics, or other scroll-driven requests. Screenshot stitching and annotation run locally without a PageWand upload or persistent screenshot history.
+
 Webpages themselves may continue making their own network requests while the extension is active. PageWand does not control or claim responsibility for page-originated traffic.
 
 ## Permissions

@@ -1,14 +1,32 @@
 # PageWand
 
-**A lightweight browser toolkit for shaping any webpage.**
+**Clean up the page. Make your point. Capture the whole story.**
 
-PageWand (PW) is a lightweight Chrome extension for temporarily cleaning up and inspecting a webpage. Remove distracting elements, edit text-only content, copy a computed CSS snapshot, capture and annotate what you see, or download the displayed original asset.
+A small Chrome extension for all the things you wish you could do to a webpage before sharing it. Remove a distracting sidebar. Try a better headline. Capture a long article or scrolling dashboard. Add an arrow, cover sensitive details, and save the result.
 
-**Available now on the [Chrome Web Store](https://chromewebstore.google.com/detail/pagewand/iblpdcnjcidcojjfiikclboaaenikloc).**
+**[Add PageWand to Chrome →](https://chromewebstore.google.com/detail/pagewand/iblpdcnjcidcojjfiikclboaaenikloc)** · [Install the latest source](#install-from-source) · [MIT licensed](LICENSE)
 
-![PageWand mode selector](docs/onboarding.png)
+No account. No backend. No analytics or telemetry. **Zero runtime dependencies.** PageWand runs on demand in the tab you activate.
 
-PageWand has no runtime dependencies, backend, accounts, analytics, or telemetry. It runs on demand in the active tab.
+![PageWand capture toolbar with Visible page, Selected area, and Full page](docs/toolbar.png)
+
+## From “just one screenshot” to done
+
+- **Share the useful part.** Zap distractions, then capture the page with your changes intact.
+- **Show the copy you mean.** Temporarily edit a text-only element and screenshot the proposal in context.
+- **Go beyond one screen.** Capture a full page or the main scrolling panel in a dashboard, then annotate and export a PNG.
+- **Give precise feedback.** Add arrows, rectangles, and text. Use opaque Redact to cover sensitive details before sharing.
+- **Inspect or grab an asset.** Copy a computed-style snapshot or download the displayed original image, SVG, icon, or background image.
+
+Page edits are temporary. Reloading normally restores the website; Zap and saved text edits also support session undo.
+
+## New: capture the whole page
+
+Press **S**, then **3**. PageWand scrolls, captures, and stitches locally, then opens the result in its annotation editor. On dashboard apps, it can recognize the main scrolling content panel even when the outer page stays still.
+
+Keep the tab active, watch the progress, and cancel with **Esc** whenever you need to. Your original scroll position is restored afterward. Long captures retain Chrome’s returned pixel resolution, with explicit size limits to keep memory use bounded.
+
+**The latest capture improvements are in source version 1.1.1.** [Install from this repository](#install-from-source) to try them; Chrome Web Store updates are published separately. See [capture behavior and limits](#full-page-screenshots) for supported layouts.
 
 ## What it does
 
@@ -17,12 +35,12 @@ PageWand has no runtime dependencies, backend, accounts, analytics, or telemetry
 | Zap | `Z` | Remove the element under the pointer. |
 | Edit | `E` | Temporarily edit a text-only element. `Esc` cancels; `Ctrl/⌘ + Enter` saves. |
 | CSS | `C` | Preview and copy a selected computed-style snapshot. |
-| Capture | `S` | Capture the visible part of the page (`1`) or a selected area (`2`), then annotate it. |
+| Capture | `S` | Capture the visible page (`1`), a selected area (`2`), or the full page (`3`), then annotate it. |
 | Download | `D` | Download the displayed original image, SVG, icon, or background image. |
 
-The compact toolbar shows only the current tool and actions that apply to it. Choose the current tool to switch tools; Capture reveals **Visible page** and **Selected area**, Parent appears only for element-based tools, and Undo appears only when there is something to restore. Keyboard shortcuts are ignored while you type in an input, textarea, select, or editable region.
+The compact toolbar shows only the current tool and actions that apply to it. Choose the current tool to switch tools; Capture reveals **Visible page**, **Selected area**, and **Full page**, Parent appears only for element-based tools, and Undo appears only when there is something to restore. Keyboard shortcuts are ignored while you type in an input, textarea, select, or editable region.
 
-![PageWand persistent toolbar](docs/toolbar.png)
+![Choose among PageWand’s five tools](docs/onboarding.png)
 
 ## Install
 
@@ -52,9 +70,21 @@ Click the extension icon—or press `Alt + Shift + Z`—in a normal webpage tab 
 - **Pixelate is a visual effect, not secure redaction.** Use the opaque Redact tool when covering sensitive content.
 - Download preserves the displayed original asset and its known extension. It does not silently flatten animated images into PNG.
 
+## Full-page screenshots
+
+Choose **Capture → Full page** (or press `S`, then `3`). PageWand scrolls the main document—or a dominant scrolling app panel when the document itself does not scroll—and stitches a PNG locally, preserving your current Zap and Edit changes. Keep the tab active while it captures. **Cancel** or `Esc` stops the operation; your original scroll position and temporary capture styles are restored. Review, annotate, copy, or download the result in the existing editor.
+
+- Dashboard panels are captured on their own, without repeating the surrounding app navigation. Smaller independently scrolling widgets retain their current contents. Ambiguous multi-panel layouts ask you to use Selected area.
+- Captures vertically at the current viewport width (or the visible width of the main panel) and Chrome's returned screenshot resolution. Horizontal overflow is excluded, with a notice before capture.
+- Common sticky headings are temporarily returned to normal flow; fixed overlays appear only in the first section. A fixed footer therefore stays at its first viewport position. Complex layouts may differ from their scrolling appearance.
+- Preparation triggers common lazy images, but unavailable images, virtualized lists, iframe/Shadow DOM internals, video, and continually changing pages cannot be captured completely or frozen universally. Scrolling may trigger the website's own network requests.
+- Changing tabs, scrolling manually, resizing, or changing zoom cancels capture. Changing document/panel height or panel position aborts instead of silently returning a partial image.
+- Limits: 24 million output pixels, 30,000 pixels per side, 60 sections, 15 seconds for preparation, and 90 seconds overall. Very long/high-resolution pages can exceed these limits. Use Selected area for smaller captures.
+- Annotation undo retains up to 20 changed regions within a 64 MiB budget. Older undo steps are evicted as needed; an annotation too large to fit is declined. Screenshots and undo buffers are released when the editor closes.
+
 ## Current scope and limitations
 
-PageWand targets the main document of ordinary HTTP and HTTPS pages that Chrome allows the extension to access. It does not traverse iframes or closed/open Shadow DOM internals. Some sites may block clipboard operations or asset downloads, and Chrome-protected pages cannot be modified. Responsive assets use an image's displayed `currentSrc` when available.
+PageWand works on ordinary HTTP and HTTPS pages that Chrome allows the extension to access. Full-page capture supports the document or a detected main scrolling panel; smaller independently scrolling widgets keep their current views. It does not traverse iframes or closed/open Shadow DOM internals. Some sites may block clipboard operations or asset downloads, and Chrome-protected pages cannot be modified. Responsive assets use an image's displayed `currentSrc` when available.
 
 ## Privacy and permissions
 
@@ -71,7 +101,7 @@ There are no declared persistent host permissions and no web-accessible resource
 
 ## Development
 
-Requires Node.js 20 or newer for development checks. Runtime extension code remains dependency-free.
+Requires Node.js 20 or newer for development checks. Runtime extension code remains dependency-free. The standalone public checkout is the development source; generated `dist/` folders are disposable artifacts, not Git checkouts.
 
 ```bash
 npm install
@@ -79,7 +109,7 @@ npm run check
 npm run test:extension
 ```
 
-`npm run check` performs JavaScript syntax checks, runs browser and service-worker regressions, builds an allowlisted release ZIP, and verifies that the archive contains no local planning files, editor settings, dependency folders, or Git metadata. `npm run test:extension` separately loads the actual runtime in an unpacked extension's isolated world, using a disposable Chromium profile, and verifies clean UI teardown.
+`npm run check` performs JavaScript syntax checks, runs browser and service-worker regressions, builds an allowlisted release ZIP, and verifies that the archive contains no local planning files, editor settings, dependency folders, or Git metadata. `npm run test:extension` separately loads the actual runtime in an unpacked extension's isolated world, using a disposable Chromium profile, and checks real screenshot stitching, dashboard panels, zoom, cancellation, annotation undo, and clean UI teardown.
 
 To build only the extension archive:
 
